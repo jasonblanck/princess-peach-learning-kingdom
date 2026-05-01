@@ -899,6 +899,80 @@
     margin-top: 6px;
   }
 
+  /* ===== LETTER TRACING ===== */
+  .trace-area {
+    position: relative;
+    width: 280px; height: 280px;
+    margin: 10px auto;
+    background: rgba(255,255,255,0.06);
+    border: 4px dashed var(--gold);
+  }
+  .trace-letter {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 200px;
+    color: rgba(255, 255, 255, 0.18);
+    pointer-events: none;
+    user-select: none;
+    line-height: 1;
+  }
+  .trace-canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    cursor: crosshair;
+    touch-action: none;
+  }
+
+  /* ===== CONNECT THE DOTS ===== */
+  .dots-area {
+    position: relative;
+    width: 100%; max-width: 360px;
+    aspect-ratio: 1;
+    margin: 10px auto;
+    background: rgba(0,0,0,0.55);
+    border: 3px solid var(--pink);
+    overflow: hidden;
+  }
+  .dot {
+    position: absolute;
+    width: 38px; height: 38px;
+    background: var(--gold);
+    color: #000;
+    border: 3px solid #000;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transform: translate(-50%, -50%);
+    user-select: none;
+    z-index: 2;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .dot.tapped {
+    background: var(--green);
+    color: #fff;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  .dot.next {
+    animation: dotPulse 0.7s infinite;
+  }
+  @keyframes dotPulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 0 0 var(--pink); }
+    50% { transform: translate(-50%, -50%) scale(1.2); box-shadow: 0 0 0 8px rgba(255, 110, 180, 0.3); }
+  }
+  .dot-line {
+    position: absolute;
+    background: var(--pink);
+    height: 5px;
+    transform-origin: 0 50%;
+    pointer-events: none;
+    z-index: 1;
+    box-shadow: 0 0 6px rgba(255, 110, 180, 0.6);
+  }
+  .dot-line.closing { background: var(--gold); box-shadow: 0 0 10px rgba(255, 215, 0, 0.8); }
+
   /* ===== BIG RACE VS BOWSER ===== */
   .race-track {
     width: 100%;
@@ -1335,6 +1409,20 @@ const LEVELS = [
     questions: () => generateBigRace(),
     unlocked: false
   },
+  {
+    id: 18, name: 'LETTER TRACING', icon: '✏️', type: 'TRACING',
+    badge: 'NEW',
+    desc: 'Trace the letter with your finger!',
+    questions: () => generateLetterTracing(),
+    unlocked: true
+  },
+  {
+    id: 19, name: 'CONNECT THE DOTS', icon: '🔗', type: 'PUZZLE',
+    badge: 'NEW',
+    desc: 'Connect the dots in order!',
+    questions: () => generateConnectDots(),
+    unlocked: true
+  },
 ];
 
 // ==================== QUESTION GENERATORS ====================
@@ -1704,6 +1792,48 @@ function generateBigRace() {
   }];
 }
 
+function generateLetterTracing() {
+  const letters = 'ABCDEFGHIJKLMNOPRSTW'.split('');
+  return shuffle(letters).slice(0,5).map(letter => ({
+    type:'tracing',
+    prompt:`Trace the letter ${letter} with your finger!`,
+    letter,
+    answer: letter,
+    emoji:'✏️'
+  }));
+}
+
+const DOT_PUZZLES = [
+  {name:'STAR', dots:[
+    {x:50,y:8},{x:62,y:38},{x:94,y:38},{x:68,y:58},{x:78,y:90},{x:50,y:72},{x:22,y:90},{x:32,y:58},{x:6,y:38},{x:38,y:38}
+  ]},
+  {name:'HEART', dots:[
+    {x:50,y:30},{x:35,y:14},{x:14,y:22},{x:10,y:42},{x:30,y:65},{x:50,y:88},{x:70,y:65},{x:90,y:42},{x:86,y:22},{x:65,y:14}
+  ]},
+  {name:'SQUARE', dots:[
+    {x:18,y:18},{x:50,y:18},{x:82,y:18},{x:82,y:50},{x:82,y:82},{x:50,y:82},{x:18,y:82},{x:18,y:50}
+  ]},
+  {name:'TRIANGLE', dots:[
+    {x:50,y:14},{x:62,y:36},{x:74,y:58},{x:86,y:80},{x:50,y:80},{x:14,y:80},{x:26,y:58},{x:38,y:36}
+  ]},
+  {name:'FISH', dots:[
+    {x:18,y:50},{x:38,y:30},{x:60,y:28},{x:78,y:42},{x:92,y:30},{x:92,y:70},{x:78,y:58},{x:60,y:72},{x:38,y:70}
+  ]},
+  {name:'HOUSE', dots:[
+    {x:50,y:14},{x:78,y:36},{x:86,y:42},{x:86,y:84},{x:14,y:84},{x:14,y:42},{x:22,y:36}
+  ]},
+];
+function generateConnectDots() {
+  return shuffle(DOT_PUZZLES).slice(0,5).map(p => ({
+    type:'connectDots',
+    prompt:`Tap the dots in order to make a ${p.name}!`,
+    name: p.name,
+    dots: p.dots,
+    answer: p.name,
+    emoji:'🔗'
+  }));
+}
+
 function generateMixed() {
   const qs = [];
   for(let i=0;i<6;i++){
@@ -1727,10 +1857,10 @@ function buildMap() {
   grid.innerHTML = '';
   LEVELS.forEach((lvl, i) => {
     const completed = STATE.completedLevels.includes(lvl.id);
-    const unlocked = i===0 || STATE.completedLevels.includes(i-1);
+    const unlocked = true; // All levels playable in any order
     const node = document.createElement('div');
-    node.className = `level-node ${completed?'completed':unlocked?'unlocked':'locked'}`;
-    const stars = completed ? '⭐⭐⭐' : unlocked ? '☆☆☆' : '🔒';
+    node.className = `level-node ${completed?'completed':'unlocked'}`;
+    const stars = completed ? '⭐⭐⭐' : '☆☆☆';
     node.innerHTML = `
       <div class="level-type-badge">${lvl.badge}</div>
       <span class="level-icon">${lvl.icon}</span>
@@ -1918,6 +2048,24 @@ function showQuestion() {
     html += `</div>`;
     html += `<button class="race-tap-btn" id="raceTap" onmousedown="tapRace()" ontouchstart="tapRace();event.preventDefault();">TAP! TAP! TAP!</button>`;
     setTimeout(() => startBigRace(q), 200);
+  } else if(q.type === 'tracing') {
+    STATE.traceDrawn = false;
+    STATE.tracePixels = 0;
+    html += `<div class="trace-area" id="traceArea">
+      <div class="trace-letter">${q.letter}</div>
+      <canvas class="trace-canvas" id="traceCanvas" width="280" height="280"></canvas>
+    </div>`;
+    html += `<div style="font-size:8px; color:var(--gold); margin:6px 0;">DRAW ON THE LETTER WITH YOUR FINGER!</div>`;
+    btns.innerHTML = `<button class="pixel-btn btn-blue" onclick="clearTrace()">↩ CLEAR</button>
+      <button class="pixel-btn btn-green" onclick="checkTrace('${q.letter}')">✅ DONE!</button>`;
+    setTimeout(setupTraceCanvas, 80);
+  } else if(q.type === 'connectDots') {
+    STATE.dotIndex = 0;
+    STATE.dotTotal = q.dots.length;
+    STATE.dotName = q.name;
+    html += `<div style="font-size:9px; color:var(--gold); margin:6px 0;">Tap dot <span id="nextDot" style="color:var(--pink); font-size:14px;">1</span> next!</div>`;
+    html += `<div class="dots-area" id="dotsArea"></div>`;
+    setTimeout(() => renderDots(q.dots), 80);
   }
 
   panel.innerHTML = html;
@@ -2253,6 +2401,135 @@ function tapRace() {
   if(p) p.style.left = Math.min(STATE.racePeach, 92) + '%';
   if(STATE.racePeach >= 100) endBigRace(true);
 }
+// ===== Letter Tracing =====
+function setupTraceCanvas() {
+  const canvas = document.getElementById('traceCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.lineWidth = 16;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = '#ff6eb4';
+  let drawing = false;
+  let last = null;
+  function getPos(e) {
+    const r = canvas.getBoundingClientRect();
+    const t = e.touches ? e.touches[0] : e;
+    return {
+      x: (t.clientX - r.left) * canvas.width / r.width,
+      y: (t.clientY - r.top) * canvas.height / r.height
+    };
+  }
+  function start(e) { e.preventDefault(); drawing = true; last = getPos(e); }
+  function move(e) {
+    if(!drawing) return; e.preventDefault();
+    const p = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(last.x, last.y);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    STATE.tracePixels += Math.hypot(p.x - last.x, p.y - last.y);
+    STATE.traceDrawn = true;
+    last = p;
+  }
+  function end() { drawing = false; }
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', move);
+  canvas.addEventListener('mouseup', end);
+  canvas.addEventListener('mouseleave', end);
+  canvas.addEventListener('touchstart', start, {passive:false});
+  canvas.addEventListener('touchmove', move, {passive:false});
+  canvas.addEventListener('touchend', end);
+}
+
+function clearTrace() {
+  const c = document.getElementById('traceCanvas');
+  if(!c) return;
+  c.getContext('2d').clearRect(0, 0, c.width, c.height);
+  STATE.tracePixels = 0;
+  STATE.traceDrawn = false;
+}
+
+function checkTrace(letter) {
+  if(STATE.tracePixels < 100) {
+    speak(`Try drawing on the letter ${letter}!`, {rate:0.9});
+    playWrongSound();
+    return;
+  }
+  playCorrectSound();
+  STATE.currentScore++;
+  STATE.stars++;
+  saveState();
+  speak(`Great tracing! Letter ${letter}. ${pickCheer()}`, {rate:0.95, pitch:1.3});
+  showFeedback(true);
+  setTimeout(() => { hideFeedback(); STATE.currentQ++; showQuestion(); }, 1700);
+}
+
+// ===== Connect the Dots =====
+function renderDots(dots) {
+  const area = document.getElementById('dotsArea');
+  if(!area) return;
+  area.innerHTML = '';
+  dots.forEach((d, i) => {
+    const el = document.createElement('div');
+    el.className = 'dot' + (i === 0 ? ' next' : '');
+    el.id = 'dot' + i;
+    el.style.left = d.x + '%';
+    el.style.top = d.y + '%';
+    el.textContent = (i + 1);
+    el.onclick = () => tapDot(i, dots);
+    area.appendChild(el);
+  });
+}
+
+function drawDotLine(area, a, b, isClose) {
+  const r = area.getBoundingClientRect();
+  const ax = a.x / 100 * r.width, ay = a.y / 100 * r.height;
+  const bx = b.x / 100 * r.width, by = b.y / 100 * r.height;
+  const dx = bx - ax, dy = by - ay;
+  const len = Math.hypot(dx, dy);
+  const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+  const line = document.createElement('div');
+  line.className = 'dot-line' + (isClose ? ' closing' : '');
+  line.style.left = a.x + '%';
+  line.style.top = a.y + '%';
+  line.style.width = len + 'px';
+  line.style.transform = `rotate(${angle}deg)`;
+  area.appendChild(line);
+}
+
+function tapDot(i, dots) {
+  if(i !== STATE.dotIndex) {
+    playWrongSound();
+    speak(`Tap dot ${STATE.dotIndex + 1}`, {rate:1, pitch:1.2});
+    return;
+  }
+  const el = document.getElementById('dot' + i);
+  el.classList.add('tapped');
+  el.classList.remove('next');
+  playNote(440 + i * 60, 0.12);
+
+  const area = document.getElementById('dotsArea');
+  if(i > 0 && area) drawDotLine(area, dots[i-1], dots[i], false);
+
+  STATE.dotIndex++;
+  const nextEl = document.getElementById('dot' + STATE.dotIndex);
+  if(nextEl) nextEl.classList.add('next');
+  const nd = document.getElementById('nextDot');
+  if(nd) nd.textContent = STATE.dotIndex + 1;
+
+  if(STATE.dotIndex >= STATE.dotTotal) {
+    if(area) drawDotLine(area, dots[dots.length-1], dots[0], true);
+    STATE.currentScore++;
+    STATE.stars++;
+    saveState();
+    playCorrectSound();
+    speak(`You made a ${STATE.dotName}! ${pickCheer()}`, {rate:0.95, pitch:1.3});
+    showFeedback(true);
+    setTimeout(() => { hideFeedback(); STATE.currentQ++; showQuestion(); }, 2000);
+  }
+}
+
 function endBigRace(won) {
   STATE.raceDone = true;
   clearInterval(raceInterval);
