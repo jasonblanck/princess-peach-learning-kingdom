@@ -3,6 +3,9 @@
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Princess Peach's Learning Kingdom 👑</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
@@ -1045,9 +1048,14 @@
   </div>
   <div style="font-size:clamp(7px,1.5vw,10px); color:var(--pink); text-align:center; line-height:2;">WHAT IS YOUR NAME, HERO?</div>
   <input type="text" class="pixel-input" id="playerNameInput" placeholder="TYPE NAME HERE" maxlength="12" style="max-width:350px;" autocomplete="off" value="BELLA">
-  <button class="pixel-btn btn-pink" onclick="startGame()" style="font-size:clamp(8px,2vw,12px);">
-    ▶ START ADVENTURE!
-  </button>
+  <div style="display:flex; gap:12px; flex-wrap:wrap; justify-content:center;">
+    <button class="pixel-btn btn-pink" onclick="startGame()" style="font-size:clamp(8px,2vw,12px);">
+      ▶ START ADVENTURE!
+    </button>
+    <button class="pixel-btn btn-gold" onclick="openShopFromIntro()" style="font-size:clamp(8px,2vw,12px);">
+      🎁 PRIZES
+    </button>
+  </div>
 </div>
 
 <!-- ==================== TITLE / HOME SCREEN ==================== -->
@@ -2757,6 +2765,15 @@ const RETURN_LINES = [
 function pickWelcome(arr) {
   const n = STATE.playerName || 'BELLA';
   return rand(arr).replace(/\{N\}/g, n);
+}
+
+function openShopFromIntro() {
+  // Allow viewing prizes from the intro screen — set a default name if none yet
+  if(!STATE.playerName) STATE.playerName = (document.getElementById('playerNameInput').value.trim() || 'BELLA').toUpperCase();
+  saveState();
+  updateHUD();
+  buildShop();
+  showScreen('screen-shop');
 }
 
 function startGame() {
